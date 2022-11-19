@@ -1,6 +1,7 @@
 import { type NextPage } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
 
 import { trpc } from "../utils/trpc";
@@ -20,34 +21,38 @@ const Home: NextPage = () => {
 			<main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
 				<div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
 					<h1 className="flex flex-col font-extrabold tracking-tight text-white sm:text-[5rem] text-center">
-						<span className="text-9xl underline underline-offset-1 text-[hsl(280,100%,70%)]">Gogotzumon</span>
+						<span className="text-9xl underline text-[hsl(280,100%,70%)]">Gotsumon</span>
 						<span className="text-6xl">The Activity Logger</span>
 					</h1>
-					<div className="flex flex-row gap-2">
-						<Link
-							className={cardStyles}
-							href="https://create.t3.gg/en/introduction"
-							target="_blank"
-						>
-							<h2 className="text-3xl font-bold">App built on create-t3-app</h2>
-							<h3 className="text-2xl font-bold">Documentation →</h3>
-							<div className="text-lg">
-								Learn more about Create T3 App, the libraries it uses, and how
-								to deploy it.
-							</div>
-						</Link>
-						<div className={cardStyles}>
-							<h2 className="text-3xl font-bold">What even is this?</h2>
-							<h3 className="text-2xl font-bold">Log Daily, Daily Log</h3>
-							<div className="text-lg">
-								This is meant as a simple web application to log some activites
-								done through the day, week, month and year
+					<div className="flex flex-col w-full justify-between  items-center gap-4">
+						<div className="flex flex-row gap-4">
+							<Link
+								className={cardStyles}
+								href="https://create.t3.gg/en/introduction"
+								target="_blank"
+							>
+								<h2 className="text-3xl font-bold text-center">App built on create-t3-app</h2>
+								<h3 className="text-2xl font-bold">Documentation →</h3>
+								<div className="text-lg">
+									Learn more about Create T3 App, the libraries it uses, and how
+									to deploy it.
+								</div>
+							</Link>
+							<div className={cardStyles + " text-center"}>
+								<h2 className="text-3xl font-bold">What even is this?</h2>
+								<h3 className="text-2xl font-bold">Log Daily, Daily Log</h3>
+								<div className="text-lg">
+									This is meant as a simple web application to log some activites
+									done through the day, week, month and year
+								</div>
 							</div>
 						</div>
-						<div className={cardStyles}>
-							<h2 className="text-3xl font-bold">Auth Showcase</h2>
-							<h3 className="text-2xl font-bold">{status}</h3>
-							<AuthShowcase />
+						<div className="flex flex-row gap-4">
+							<div className={cardStyles + " text-center"}>
+								<h2 className="text-3xl font-bold">Auth Showcase</h2>
+								<h3 className="text-2xl font-bold">{status}</h3>
+								<AuthShowcase />
+							</div>
 						</div>
 					</div>
 				</div>
@@ -70,9 +75,14 @@ const AuthShowcase: React.FC = () => {
 
 	return (
 		<div className="flex flex-col items-center justify-center gap-4">
-			<p className="text-center text-2xl text-white">
+			<p className="flex flex-col items-center text-center text-2xl text-white">
 				{sessionData && <span>Logged in as {sessionData?.user?.name}</span>}
 				{secretMessage && <span> - {secretMessage}</span>}
+				{sessionData && sessionData.user?.image && <Image
+					src={sessionData.user.image}
+					width={100} height={100} alt={"User icon"}
+					className="rounded-md"
+				/>}
 			</p>
 			<button
 				className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
