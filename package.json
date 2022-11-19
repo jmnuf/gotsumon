@@ -17,6 +17,7 @@
     "@trpc/next": "10.0.0-rc.4",
     "@trpc/react-query": "10.0.0-rc.4",
     "@trpc/server": "10.0.0-rc.4",
+    "bcrypt": "^5.1.0",
     "next": "13.0.2",
     "next-auth": "^4.15.1",
     "react": "18.2.0",
@@ -25,6 +26,7 @@
     "zod": "^3.18.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/node": "^18.0.0",
     "@types/react": "^18.0.14",
     "@types/react-dom": "^18.0.5",

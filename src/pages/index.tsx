@@ -1,7 +1,7 @@
 import { type NextPage } from "next";
+import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
 
 import { trpc } from "../utils/trpc";
 
@@ -63,6 +63,8 @@ const AuthShowcase: React.FC = () => {
     undefined, // no input
     { enabled: sessionData?.user !== undefined },
   );
+
+	console.log(sessionData, secretMessage);
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">

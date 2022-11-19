@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
   // Further reading:
   // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
@@ -14,10 +14,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Example {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum LoggerPrivacy {
+  PUBLIC
+  PRIVATE
+  GROUP
+}
+
+model ActivityLogger {
+  id                    String                  @id @default(cuid())
+  name                  String
+  owner                 User                    @relation(fields: [ownerId], references: [id])
+  privacy               LoggerPrivacy
+  ownerId               String
+  ActivityLoggerMembers ActivityLoggerMembers[]
+}
+
+model ActivityLoggerMembers {
+  id               String         @id @default(cuid())
+  logger           ActivityLogger @relation(fields: [activityLoggerId], references: [id], onDelete: Cascade)
+  member           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityLoggerId String
+  userId           String
 }
 
 // Necessary for Next auth
@@ -27,12 +44,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? // @db.Text
-  access_token      String? // @db.Text
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? // @db.Text
+  id_token          String? @db.Text
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -50,11 +67,19 @@ model Session {
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?
   emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
+  createdAt     DateTime? @default(now())
+
+  username String  @unique
+  password String
+  image    String?
+
+  accounts Account[]
+  sessions Session[]
+
+  ActivityLoggerMembers ActivityLoggerMembers[]
+  ActivityLogger        ActivityLogger[]
 }
 
 model VerificationToken {
