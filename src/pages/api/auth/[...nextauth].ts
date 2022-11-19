@@ -1,10 +1,10 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
-// import DiscordProvider from "next-auth/providers/discord";
+import DiscordProvider from "next-auth/providers/discord";
 // Prisma adapter for NextAuth, optional and can be removed
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
-// import { env } from "../../../env/server.mjs";
 import Credentials from "next-auth/providers/credentials";
+import { env } from "../../../env/server.mjs";
 import { compareUser } from "../../../server/common/hasher";
 import { prisma } from "../../../server/db/client";
 
@@ -35,6 +35,8 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
 		Credentials({
+			id: "creds",
+			name: "Credentials",
 			type: "credentials",
 			credentials: {
 				username: { type: "string" },
@@ -60,11 +62,15 @@ export const authOptions: NextAuthOptions = {
 
 				return Object.assign({}, user, { name: user.username });
 			},
-		})
-    // DiscordProvider({
-    //   clientId: env.DISCORD_CLIENT_ID,
-    //   clientSecret: env.DISCORD_CLIENT_SECRET,
-    // }),
+		}),
+    DiscordProvider({
+			id: "discord",
+			name: "Discord",
+			token: "https://discord.com/api/oauth2/token",
+			authorization: "https://discord.com/api/oauth2/authorize?scope=identify+email+relationships.read",
+      clientId: env.DISCORD_CLIENT_ID,
+      clientSecret: env.DISCORD_CLIENT_SECRET,
+    }),
     // ...add more providers here
   ],
 };
