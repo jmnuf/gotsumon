@@ -6,14 +6,17 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 import Credentials from "next-auth/providers/credentials";
 import { env } from "../../../env/server.mjs";
-import { compareUser } from "../../../server/common/hasher";
+import { compareUser, hashUser } from "../../../server/common/hasher";
 import { prisma } from "../../../server/db/client";
+
+const maxAge = 43_200;
 
 export const authOptions: NextAuthOptions = {
 	session: {
+		// I'll be honest, no idea how to set it up with NextAuth's prisma adapter thingy 😭
 		strategy: "jwt",
-		maxAge: 43_200,
-		updateAge: 21_600,
+		maxAge,
+		updateAge: maxAge - 60 * 30, // refresh 30 minutes before expiring
 	},
 	// Include user.id on session
 	callbacks: {
@@ -38,11 +41,11 @@ export const authOptions: NextAuthOptions = {
 	providers: [
 		Credentials({
 			id: "creds",
-			name: "Credentials",
+			name: "Gotsu Account",
 			type: "credentials",
 			credentials: {
-				username: { type: "string" },
-				password: { type: "password" }
+				username: { type: "string", placeholder: "xXNoobSlayer3000Xx" },
+				password: { type: "password", placeholder: "Blues Eye White Dragon I choose you!" }
 			},
 			async authorize(credentials, req) {
 				console.log(req);
@@ -57,12 +60,20 @@ export const authOptions: NextAuthOptions = {
 				if (!user) {
 					return null;
 				}
-				if (!user.password) {
-					throw new Error("You haven't set a password for your account!", { cause: "User doesn't have password" });
-				}
-				const rightPassword = await compareUser(user.username, credentials.password, user.password);
-				if (!rightPassword) {
-					return null;
+				if (user.password) {
+					const rightPassword = await compareUser(user.username, credentials.password, user.password);
+					if (!rightPassword) {
+						return null;
+					}
+				} else {
+					await prisma.user.update({
+						data: {
+							password: (await hashUser(user.username, credentials.password)).hash
+						},
+						where: {
+							id: user.id
+						}
+					});
 				}
 
 				return Object.assign({}, user, { name: user.username });
@@ -74,7 +85,7 @@ export const authOptions: NextAuthOptions = {
 			authorization: `https://discordapp.com/oauth2/authorize?&client_id=${env.DISCORD_CLIENT_ID}&scope=identify+email+connections`,
 			clientId: env.DISCORD_CLIENT_ID,
 			clientSecret: env.DISCORD_CLIENT_SECRET,
-			async profile(profile:DiscordProfile, tokens):Promise<User> {
+			async profile(profile:DiscordProfile):Promise<User> {
 				if (profile.avatar === null) {
 					const defaultAvatarNumber = parseInt(profile.discriminator) % 5;
 					profile.image_url = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarNumber}.png`;
@@ -82,14 +93,11 @@ export const authOptions: NextAuthOptions = {
 					const format = profile.avatar.startsWith("a_") ? "gif" : "png";
 					profile.image_url = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.${format}`;
 				}
-				console.log("DiscordProvider->Profile->", profile);
-				console.log("DiscordProvider->Token->", tokens);
 				const user = await prisma.user.findFirst({
 					where: {
 						email: profile.email,
 					}
 				});
-				console.log("User exists:", user != null);
 				if (!user) {
 					const newUser = await prisma.user.create({
 						data: {
