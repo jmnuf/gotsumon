@@ -67,12 +67,13 @@ model Session {
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?
+  email         String?   @unique
   emailVerified DateTime?
   createdAt     DateTime? @default(now())
 
-  username String  @unique
-  password String
+  username String @unique @default(cuid()) @db.VarChar(30)
+
+  password String?
   image    String?
 
   accounts Account[]
