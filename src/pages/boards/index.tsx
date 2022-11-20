@@ -1,20 +1,25 @@
-import type { NextPage } from "next";
+import type { GetServerSideProps, NextPage } from "next";
+import type { Session } from "next-auth";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import React from "react";
 import Body from "../../components/body";
+import { PageIndex } from "../../components/navbar";
 
-const Boards: NextPage = () => {
+const Boards: NextPage<{ boards:{ name:string, ownerId:string }[] }> = ({ boards }) => {
+	const session = useSession();
+
+	console.log(boards);
+
 	return (<>
 		<Head>
 			<title>G.Boards</title>
 			<meta name="description" content="Check Gotsumon's Managed boards" />
 		</Head>
-		<Body>
-			{/* Here goes navbar when done */}
+		<Body activePage={PageIndex.Boards}>
 			{/* Banner */}
-			<UserBoards />
+			<UserBoards sessionData={session.data} />
 			{/* Boards Were user is a member but not owner */}
 		</Body>
 	</>);
@@ -22,10 +27,26 @@ const Boards: NextPage = () => {
 
 export default Boards;
 
+export const getServerSideProps:GetServerSideProps = async () => {
+	const props = { boards: [] } as { boards:{ name:string, ownerId:string }[] };
+	if (prisma) {
+		const publicBoards = await prisma.activityLogger.findMany({
+			select: {
+				name: true,
+				ownerId: true,
+			},
+			where: {
+				privacy: "PUBLIC",
+			}
+		});
+		props.boards = publicBoards;
+	}
+	return { props }
+}
 
-const UserBoards: React.FC = () => {
 
-	const { data } = useSession();
+const UserBoards: React.FC<{ sessionData:Session|null }> = ({ sessionData: data }) => {
+
 	if (!data) {
 		return (
 			<div className="container flex flex-col justify-center items-center text-center">
@@ -48,7 +69,7 @@ const UserBoards: React.FC = () => {
 		<div className="container flex flex-col p-2 justify-between items-center text-center">
 			<h2 className="text-4xl">Your boards!</h2>
 			<div className="w-full h-2 bg-slate-600 my-3 rounded-md"></div>
-			<div className="container w-full grid md:grid-cols-2 grid-cols-1 gap-5">
+			<div className="container md:w-full w-4/5 grid md:grid-cols-2 grid-cols-1 gap-5">
 				{
 					boards.map((b, i) => <BoardCard key={i} content={b.title} href={b.link} />)
 				}
