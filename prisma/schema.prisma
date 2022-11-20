@@ -20,6 +20,23 @@ enum LoggerPrivacy {
   GROUP
 }
 
+model ActivityCardsContents {
+  id             String       @id @default(cuid())
+  card           ActivityCard @relation(fields: [activityCardId], references: [id])
+  content        String       @db.LongText
+  activityCardId String
+}
+
+model ActivityCard {
+  id         String                  @id @default(cuid())
+  title      String
+  createdAt  DateTime                @default(now())
+  resolvedAt DateTime?
+  contents   ActivityCardsContents[]
+  owner      User                    @relation(fields: [userId], references: [id])
+  userId     String
+}
+
 model ActivityLogger {
   id                    String                  @id @default(cuid())
   name                  String
@@ -81,6 +98,7 @@ model User {
 
   ActivityLoggerMembers ActivityLoggerMembers[]
   ActivityLogger        ActivityLogger[]
+  ActivityCard          ActivityCard[]
 }
 
 model VerificationToken {
