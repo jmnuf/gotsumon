@@ -12,6 +12,9 @@
 /prisma/db.sqlite
 /prisma/db.sqlite-journal
 
+# planet scale
+.pscale.yml
+
 # next.js
 /.next/
 /out/

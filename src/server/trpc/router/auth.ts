@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 
 export const authRouter = router({
@@ -27,5 +28,30 @@ export const authRouter = router({
 			url = user.image;
 		}
 		return { url, hasImage, name: user.name, username: user.username };
+	}),
+	getBoards: protectedProcedure
+	.input(z.object({
+		page: z.number().int().default(0),
+		pageSize: z.number().int().default(10),
+	}).default({}))
+	.query(async ({ ctx, input: { page, pageSize } }) => {
+		const boards = await ctx.prisma.activityLogger.findMany({
+			select: {
+				id: true,
+				name: true,
+				owner: {
+					select: {
+						name: true,
+						username: true,
+					}
+				}
+			},
+			where: {
+				ownerId: ctx.session.user.id
+			},
+			take: pageSize,
+			skip: pageSize * page,
+		});
+		return { result: boards, count: boards.length, page, pageSize }
 	}),
 });

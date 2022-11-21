@@ -1,4 +1,4 @@
-import type { GetServerSideProps, NextPage } from "next";
+import type { GetServerSideProps, InferGetServerSidePropsType, NextPage } from "next";
 import type { Session } from "next-auth";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
@@ -6,8 +6,19 @@ import Link from "next/link";
 import React from "react";
 import Body from "../../components/body";
 import { PageIndex } from "../../components/navbar";
+import Spinner from "../../components/spinner";
+import { trpc } from "../../utils/trpc";
 
-const Boards: NextPage<{ boards:{ name:string, ownerId:string }[] }> = ({ boards }) => {
+type BoardsDataList = {
+	id: string,
+	name: string,
+	owner: {
+		name:string|null,
+		username:string,
+	}
+}[]
+
+const Boards: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ boards }) => {
 	const session = useSession();
 
 	console.log(boards);
@@ -21,19 +32,26 @@ const Boards: NextPage<{ boards:{ name:string, ownerId:string }[] }> = ({ boards
 			{/* Banner */}
 			<UserBoards sessionData={session.data} />
 			{/* Boards Were user is a member but not owner */}
+			<BoardsGrid title="Public Boards" loading={false} boards={boards} />
 		</Body>
 	</>);
 };
 
 export default Boards;
 
-export const getServerSideProps:GetServerSideProps = async () => {
-	const props = { boards: [] } as { boards:{ name:string, ownerId:string }[] };
+export const getServerSideProps:GetServerSideProps<{ boards:BoardsDataList }> = async () => {
+	const props = { boards: [] } as { boards:BoardsDataList };
 	if (prisma) {
 		const publicBoards = await prisma.activityLogger.findMany({
 			select: {
+				id: true,
 				name: true,
-				ownerId: true,
+				owner: {
+					select: {
+						name: true,
+						username: true,
+					}
+				},
 			},
 			where: {
 				privacy: "PUBLIC",
@@ -45,38 +63,59 @@ export const getServerSideProps:GetServerSideProps = async () => {
 }
 
 
-const UserBoards: React.FC<{ sessionData:Session|null }> = ({ sessionData: data }) => {
+const UserBoards: React.FC<{ sessionData:Session|null }> = ({ sessionData }) => {
 
-	if (!data) {
+	if (!sessionData) {
 		return (
 			<div className="container flex flex-col justify-center items-center text-center">
 				<p>Login to see your boards here!</p>
 			</div>
 		);
 	}
-	if (!data.user) {
-		return <></>;
+	if (!sessionData.user) {
+		return (
+			<BoardsGrid title="Your boards" loading={false} boards={[]} emptyFallback="Can't reach your account currently? Idk what's happening, maybe log out and log in again if refreshing don't work?" />
+		);
 	}
 
-	const boards = [
-		{ "title": "Sample A", "link": "#" },
-		{ "title": "Sample B", "link": "#" },
-		{ "title": "Sample C", "link": "#" },
-		{ "title": "Sample D", "link": "#" },
-	];
+	const emptyFallback = sessionData.user ? "You currently have no boards :o" : "Can't reach your account currently? Idk what's happening, maybe log out and log in again if refreshing don't work?";
+
+	const { data, isLoading } = trpc.auth.getBoards.useQuery();
+
+	const boards:BoardsDataList|undefined = data ? data.result : []
 
 	return (
+		<BoardsGrid title="Your boards" loading={isLoading} boards={boards} emptyFallback={emptyFallback} />
+	);
+};
+
+type BoardsGridProps = {
+	title:string,
+	loading?:boolean,
+	boards:BoardsDataList,
+	emptyFallback?:string|JSX.Element,
+};
+
+const BoardsGrid: React.FC<BoardsGridProps> = ({ title, loading, boards, emptyFallback }) => {
+	const gridCSS = !loading && boards.length > 0 ? "grid md:grid-cols-2 grid-cols-1 gap-5" : "flex flex-row text-center justify-center items-center";
+	return (
 		<div className="container flex flex-col p-2 justify-between items-center text-center">
-			<h2 className="text-4xl">Your boards!</h2>
-			<div className="w-full h-2 bg-slate-600 my-3 rounded-md"></div>
-			<div className="container md:w-full w-4/5 grid md:grid-cols-2 grid-cols-1 gap-5">
+			<h2 className="text-4xl">{title}</h2>
+			<div className="w-full h-1 bg-slate-600 mt-1 mb-3 rounded-full"></div>
+			<div className={`container md:w-full w-4/5 ${gridCSS}`}>
 				{
-					boards.map((b, i) => <BoardCard key={i} content={b.title} href={b.link} />)
+					!loading ? (
+						boards.length > 0 ?
+						boards.map(b => <BoardCard key={b.id} content={b.name} href={`/b/${b.id}`} />) :
+						emptyFallback ?? "List of boards is empty"
+					) : (
+						<Spinner />
+					)
 				}
 			</div>
 		</div>
-	);
-};
+	)
+}
 
 const BoardCard: React.FC<{ content: string, href: string; }> = ({ content, href }) => {
 	return (
