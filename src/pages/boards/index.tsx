@@ -1,4 +1,4 @@
-import type { GetServerSideProps, InferGetServerSidePropsType, NextPage } from "next";
+import type { NextPage } from "next";
 import type { Session } from "next-auth";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
@@ -18,10 +18,10 @@ type BoardsDataList = {
 	}
 }[]
 
-const Boards: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ boards }) => {
+const Boards: NextPage = () => {
 	const session = useSession();
 
-	console.log(boards);
+	const { data:pbquery, isLoading:pbLoading } = trpc.boards.publicBoards.useQuery({});
 
 	return (<>
 		<Head>
@@ -32,35 +32,12 @@ const Boards: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 			{/* Banner */}
 			<UserBoards sessionData={session.data} />
 			{/* Boards Were user is a member but not owner */}
-			<BoardsGrid title="Public Boards" loading={false} boards={boards} />
+			<BoardsGrid title="Public Boards" loading={pbLoading} boards={pbquery? pbquery.result : []} />
 		</Body>
 	</>);
 };
 
 export default Boards;
-
-export const getServerSideProps:GetServerSideProps<{ boards:BoardsDataList }> = async () => {
-	const props = { boards: [] } as { boards:BoardsDataList };
-	if (prisma) {
-		const publicBoards = await prisma.activityLogger.findMany({
-			select: {
-				id: true,
-				name: true,
-				owner: {
-					select: {
-						name: true,
-						username: true,
-					}
-				},
-			},
-			where: {
-				privacy: "PUBLIC",
-			}
-		});
-		props.boards = publicBoards;
-	}
-	return { props }
-}
 
 
 const UserBoards: React.FC<{ sessionData:Session|null }> = ({ sessionData }) => {
