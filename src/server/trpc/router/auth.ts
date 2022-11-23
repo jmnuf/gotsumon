@@ -54,4 +54,67 @@ export const authRouter = router({
 		});
 		return { result: boards, count: boards.length, page, pageSize }
 	}),
+	getBoardContents: protectedProcedure
+	.input(z.object({
+		board: z.string(),
+	}))
+	.query(async ({ ctx, input }) => {
+		const board = await ctx.prisma.activityLogger.findUnique({
+			select: {
+				id: true,
+				name: true,
+				owner: {
+					select: {
+						name: true,
+						username: true,
+						image: true,
+					}
+				},
+				ActivityLoggerMembers: {
+					select: {
+						member: {
+							select: {
+								name: true,
+								username: true,
+								image: true,
+							}
+						}
+					}
+				}
+			},
+			where: {
+				id: input.board
+			}
+		});
+		const cards = await ctx.prisma.activityCard.findMany({
+			select: {
+				id: true,
+				title: true,
+				contents: {
+					select: {
+						id: true,
+						content: true,
+					}
+				},
+				owner: {
+					select: {
+						id: true,
+						name: true,
+						username: true,
+						image: true,
+					}
+				},
+				createdAt: true,
+				resolvedAt: true,
+			},
+			where: {
+				activityLoggerId: input.board
+			}
+		});
+
+		return {
+			result: board ? { board, cards } : null,
+			code: board ? 200 : 404,
+		}
+	})
 });

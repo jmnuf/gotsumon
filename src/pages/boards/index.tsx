@@ -26,7 +26,7 @@ const Boards: NextPage = () => {
 	return (<>
 		<Head>
 			<title>G.Boards</title>
-			<meta name="description" content="Check Gotsumon's Managed boards" />
+			<meta name="description" content={ session.status != "authenticated" ? "Check Gotsumon's Managed boards" : "Check your Gotsu-boards" } />
 		</Head>
 		<Body activePage={PageIndex.Boards}>
 			{/* Banner */}

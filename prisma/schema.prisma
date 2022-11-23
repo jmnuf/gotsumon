@@ -28,13 +28,15 @@ model ActivityCardsContents {
 }
 
 model ActivityCard {
-  id         String                  @id @default(cuid())
-  title      String
-  createdAt  DateTime                @default(now())
-  resolvedAt DateTime?
-  contents   ActivityCardsContents[]
-  owner      User                    @relation(fields: [userId], references: [id])
-  userId     String
+  id               String                  @id @default(cuid())
+  title            String
+  createdAt        DateTime                @default(now())
+  resolvedAt       DateTime?
+  contents         ActivityCardsContents[]
+  owner            User                    @relation(fields: [userId], references: [id])
+  userId           String
+  ActivityLogger   ActivityLogger?         @relation(fields: [activityLoggerId], references: [id])
+  activityLoggerId String?
 }
 
 model ActivityLogger {
@@ -44,6 +46,7 @@ model ActivityLogger {
   privacy               LoggerPrivacy
   ownerId               String
   ActivityLoggerMembers ActivityLoggerMembers[]
+  ActivityCards         ActivityCard[]
 }
 
 model ActivityLoggerMembers {
