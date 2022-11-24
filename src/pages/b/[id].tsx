@@ -24,8 +24,9 @@ const Board: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = 
 					<meta name="description" content="Failed to find the requested board" />
 				</Head>
 				<Body activePage={PageIndex.Boards}>
-					<div className="flex flex-row justify-center align-center text-center h-full w-full">
+					<div className="flex flex-col justify-center align-center text-center h-full w-full">
 						<h2 className="text-3xl">Failed to fetch board</h2>
+						<p>{"You might be seeing this because you don't have access to this board. Be sure to be logged in"}</p>
 						<p>If you are sure this board exists this might be a server error and you can try to refresh the page</p>
 					</div>
 				</Body>
@@ -127,6 +128,11 @@ type ServerProps = {
 
 export const getServerSideProps: GetServerSideProps<ServerProps> = async (ctx) => {
 	const session = await getSession(ctx);
+
+	if (!session) {
+		return { props: { board: null, message: "Failed" } };
+	}
+
 	const ssg = createProxySSGHelpers({
 		router: authRouter,
 		ctx: await createContextInner({ session }),
