@@ -79,10 +79,12 @@ const CardsList: React.FC<{ title: string, cards: Card[]; }> = ({ title, cards }
 			<div className="flex flex-col lg:gap-6 gap-4">
 				{
 					cards.map(c => {
+						const createdAt = new Date(c.createdAt);
+						const resolvedAt = c.resolvedAt ? new Date(c.resolvedAt) : null;
 						return (
 							<div key={c.id} className="flex flex-row h-24 bg-slate-200 text-gray-800 outline outline-2 outline-amber-100">
 								<h3 className="text-3xl">{c.title}</h3>
-								<span className="text-gray-500">{c.createdAt.toLocaleDateString()}{c.resolvedAt ? ` - ${c.resolvedAt.toLocaleDateString()}` : undefined}</span>
+								<span className="text-gray-500 select-none">{createdAt.toLocaleDateString()}{resolvedAt ? ` - ${resolvedAt.toLocaleDateString()}` : undefined}</span>
 							</div>
 						);
 					})
@@ -102,8 +104,8 @@ type Card = {
 	title: string,
 	owner: Person,
 	contents: { id: string, content: string; }[],
-	createdAt: Date,
-	resolvedAt: Date | null;
+	createdAt: string,
+	resolvedAt: string | null;
 };
 
 type ServerProps = {
@@ -142,7 +144,7 @@ export const getServerSideProps: GetServerSideProps<ServerProps> = async (ctx) =
 			owner: q.result.board.owner,
 			members: q.result.board.ActivityLoggerMembers.map(({ member: m }) => ({ name: m.name, username: m.username, image: m.image })),
 
-			cards: q.result.cards
+			cards: q.result.cards.map(c => ({ ...c, createdAt: c.createdAt.toJSON(), resolvedAt: c.resolvedAt? c.resolvedAt.toJSON() : null }))
 		}
 	} : { message: "Failed", board: null };
 
