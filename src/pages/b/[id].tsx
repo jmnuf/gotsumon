@@ -43,6 +43,9 @@ const Board: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = 
 				<meta name="description" content={session.status != "authenticated" ? "Check Gotsumon's Managed boards" : "Check your Gotsu-boards"} />
 			</Head>
 			<Body activePage={PageIndex.Boards}>
+				<div className="w-full pt-4 mb-4 text-left border-b-2 border-b-zinc-400 select-none">
+					<h1 className="container mx-auto text-6xl">{board.name}</h1>
+				</div>
 				<div className="flex flex-row justify-between w-full min-h-fit">
 					<div className="flex flex-row">
 						{
@@ -74,15 +77,15 @@ const Board: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = 
 
 const CardsList: React.FC<{ title: string, cards: Card[]; }> = ({ title, cards }) => {
 	return (
-		<div className="flex flex-col gap-6 outline outline-2 outline-slate-500 rounded-md">
+		<div className="container mx-auto flex flex-col gap-6 outline py-2 outline-2 outline-slate-500 rounded-md">
 			<h2 className="text-4xl underline text-center select-none">{title}</h2>
-			<div className="flex flex-col lg:gap-6 gap-4">
+			<div className="flex flex-col justify-center items-center pb-4 lg:gap-6 gap-4">
 				{
 					cards.map(c => {
 						const createdAt = new Date(c.createdAt);
 						const resolvedAt = c.resolvedAt ? new Date(c.resolvedAt) : null;
 						return (
-							<div key={c.id} className="flex flex-row h-24 bg-slate-200 text-gray-800 outline outline-2 outline-amber-100">
+							<div key={c.id} className="flex flex-col select-none w-5/6 h-fit py-2 px-4 rounded bg-slate-300 hover:bg-slate-100 transition-colors text-gray-800 outline outline-2 outline-amber-100">
 								<h3 className="text-3xl">{c.title}</h3>
 								<span className="text-gray-500 select-none">{createdAt.toLocaleDateString()}{resolvedAt ? ` - ${resolvedAt.toLocaleDateString()}` : undefined}</span>
 							</div>
